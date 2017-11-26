@@ -135,6 +135,16 @@ void Window::buttonClicked()
         }
         else informer->setText("<font color=DarkRed><b>Input all fields!</b></font>");
     }
+
+    if(btn->text() == "Sign up")
+    {
+        if(!login->text().isEmpty() && !pass->text().isEmpty())
+        {
+            Data *data = client->createData("sign up", validLogin(login->text()), pass->text(), "");
+            client->slotSendToServer(*data);
+        }
+        else informer->setText("<font color=DarkRed><b>Input all fields!</b></font>");
+    }
 }
 
 void Window::ParseData()
@@ -146,5 +156,14 @@ void Window::ParseData()
 
         if(client->getData().message == "Inccorect password!")
             informer->setText("<font color=DarkRed><b>Inccorect password!</b></font>");
+    }
+
+    if(client->getData().type == "sign up")
+    {
+        if(client->getData().message == "User already exist!")
+            informer->setText("<font color=DarkRed><b>User already exist!</b></font>");
+
+        if(client->getData().message == "Registration was successful!")
+            informer->setText("<font color=DarkRed><b>Registration was successful!</b></font>");
     }
 }
