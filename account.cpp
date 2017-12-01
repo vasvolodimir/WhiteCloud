@@ -3,15 +3,18 @@
 Account::Account(QString login, Client *client, QWidget *parent) : login(login), client(client) ,QDialog(parent)
 {
     layout = new QVBoxLayout;
+    creater = new Create;
+    creater->hide();
 
     connect(client, SIGNAL(readyData()), this, SLOT(ParseData()));
+    connect(creater, SIGNAL(choosenFile(QString)), this, SLOT(sendNewFile(QString)));
 
     getFile();
 }
 
 Account::~Account()
 {
-
+    delete creater;
 }
 
 void Account::Layout()
@@ -82,29 +85,12 @@ QPushButton *Account::button(QString title, QSize size)
 void Account::createToolBar()
 {
     QVector<QHBoxLayout*> tool_layouts;
-//    QVector<QString> data;
-
-//    data.clear();
-
-//    data.push_back(QApplication::applicationDirPath() + "/text.png");
-//    data.push_back(QApplication::applicationDirPath() + "/picture.png");
-//    data.push_back(QApplication::applicationDirPath() + "/audio.png");
-//    data.push_back(QApplication::applicationDirPath() + "/empty.png");
-//    data.push_back(QApplication::applicationDirPath() + "/video.png");
-
-//    qDebug() << getType(data[0]);
-
     QVector<QString> data_files;
 
     for(int i=0; i<client->getData().files.size(); i++)
         for(int j=0; j<client->getData().files[i].size(); j++)
             data_files.push_back(client->getData().files[i][j]);
 
-    qDebug() << getType(data_files[4]);
-    qDebug() << "Client (account) THIS!!!!:";
-
-    for(int i=0; i<data_files.size(); i++)
-        qDebug() << data_files[i];
 
     QToolBar *bar = new QToolBar;
 
@@ -132,12 +118,13 @@ void Account::createToolBar()
 
         QString path = QApplication::applicationDirPath();
 
-        if(this->getType(data_files[i]) == "png" || this->getType(data_files[i]) == "jpg")
+        if(getType(data_files[i]) == "png" || getType(data_files[i]) == "jpg")
             path += "/picture.png";
-        if(this->getType(data_files[i]) == "txt") path += "/text.png";
-        if(this->getType(data_files[i]) == "empty") path += "/empty.png";
-        if(this->getType(data_files[i]) == "mp4") path += "/video.png";
-        if(this->getType(data_files[i]) == "mp3") path += "/audio.png";
+        else if(getType(data_files[i]) == "txt" || getType(data_files[i]) == "docx") path += "/text.png";
+        else if(getType(data_files[i]) == "empty") path += "/empty.png";
+        else if(getType(data_files[i]) == "mp4") path += "/video.png";
+        else if(getType(data_files[i]) == "mp3") path += "/audio.png";
+        else path += "/empty.png";
 
         QAction *action = bar->addAction(QIcon(QPixmap(path)), getName(data_files[i]), this, SLOT(choosenItem()));
         action->setCheckable(true);
@@ -188,7 +175,8 @@ QString Account::getName(QString &path) const
 void Account::getFile()
 {
     QVector<QVector<QString> > temp;
-    Data *data = client->createData("getFiles", client->getData().login, client->getData().password, "", temp);
+    QByteArray btemp;
+    Data *data = client->createData("getFiles", client->getData().login, client->getData().password, "", temp, btemp);
     client->slotSendToServer(*data);
 }
 
@@ -213,8 +201,15 @@ void Account::choosenItem()
 
 void Account::buttonClick()
 {
-    remove(layout);
-    Layout();
+//    remove(layout);
+//    Layout();
+
+    QPushButton *btn = qobject_cast<QPushButton*> (sender());
+
+    if(btn->text() == "CREATE")
+    {
+        creater->show();
+    }
 }
 
 void Account::ParseData()
@@ -224,6 +219,36 @@ void Account::ParseData()
         remove(layout);
         Layout();
     }
+
+    if(client->getData().type == "newFile")
+    {
+        if(client->getData().message == "File already exist!")
+        {
+            QMessageBox::critical(this, "Atention!", client->getData().message);
+        }
+        else
+        {
+            getFile();
+            remove(layout);
+            Layout();
+        }
+    }
+}
+
+void Account::sendNewFile(QString path)
+{
+    QFile file(path);
+    file.open(QIODevice::ReadOnly);
+
+    QVector<QVector<QString> > temp;
+
+    QByteArray block = file.readAll();
+    file.close();
+
+    Data *data = client->createData("newFile", client->getData().login, client->getData().password,
+                                    getName(path), temp, block);
+
+    client->slotSendToServer(*data);
 }
 
 void Account::remove(QLayout *layout)

@@ -14,7 +14,7 @@ Client::~Client()
 
 }
 
-Data *Client::createData(QString type, QString login, QString password, QString message, QVector<QVector<QString> > files)
+Data *Client::createData(QString type, QString login, QString password, QString message, QVector<QVector<QString> > files, QByteArray file)
 {
     Data *item = new Data;
 
@@ -23,6 +23,7 @@ Data *Client::createData(QString type, QString login, QString password, QString 
     item->password = password;
     item->message = message;
     item->files = files;
+    item->file = file;
 
     return item;
 }
@@ -49,11 +50,11 @@ void Client::slotReadyRead()
 
         in >> message_from_server;
 
-        qDebug() << "Client (client) here!!: ";
+//        qDebug() << "Client (client) here!!: ";
 
-        for(int i=0; i<message_from_server.files.size(); i++)
-            for(int j=0; j<message_from_server.files[i].size(); j++)
-                qDebug() << message_from_server.files[i][j];
+//        for(int i=0; i<message_from_server.files.size(); i++)
+//            for(int j=0; j<message_from_server.files[i].size(); j++)
+//                qDebug() << message_from_server.files[i][j];
 
         nextBlockSize = 0;
     }

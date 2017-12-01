@@ -10,10 +10,14 @@
 #include <QApplication>
 #include <QPropertyAnimation>
 #include <QGraphicsOpacityEffect>
+#include <QFile>
+#include <QMessageBox>
 
 #include "client.h"
+#include "create.h"
 
 class Client;
+class Create;
 
 class Account : public QDialog
 {
@@ -38,7 +42,9 @@ private:
 
 private:
          Client *client;
+         Create *creater;
          QWidget *header;
+
          QString login;
 
          QVBoxLayout *layout;
@@ -52,6 +58,7 @@ private slots:
             void choosenItem();
             void buttonClick();
             void ParseData();
+            void sendNewFile(QString);
 };
 
 

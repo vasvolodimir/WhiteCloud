@@ -127,13 +127,14 @@ void Window::logoClicked()
 void Window::buttonClicked()
 {
     QPushButton *btn = qobject_cast<QPushButton*> (sender());
-    QVector<QVector<QString> > temp;
+    QVector<QVector<QString> > temp; // as a temp
+    QByteArray btemp;
 
     if(btn->text() == "Sign in")
     {
         if(!login->text().isEmpty() && !pass->text().isEmpty())
         {
-            Data *data = client->createData("sign in", validLogin(login->text()), pass->text(), "", temp);
+            Data *data = client->createData("sign in", validLogin(login->text()), pass->text(), "", temp, btemp);
             client->slotSendToServer(*data);
         }
         else informer->setText("<font color=DarkRed><b>Input all fields!</b></font>");
@@ -143,7 +144,7 @@ void Window::buttonClicked()
     {
         if(!login->text().isEmpty() && !pass->text().isEmpty())
         {
-            Data *data = client->createData("sign up", validLogin(login->text()), pass->text(), "", temp);
+            Data *data = client->createData("sign up", validLogin(login->text()), pass->text(), "", temp, btemp);
             client->slotSendToServer(*data);
         }
         else informer->setText("<font color=DarkRed><b>Input all fields!</b></font>");

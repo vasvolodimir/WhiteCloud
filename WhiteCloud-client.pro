@@ -27,11 +27,13 @@ SOURCES += main.cpp\
         window.cpp \
     logo.cpp \
     client.cpp \
-    account.cpp
+    account.cpp \
+    create.cpp
 
 HEADERS  += window.h \
     logo.h \
     client.h \
-    account.h
+    account.h \
+    create.h
 
 QT += network

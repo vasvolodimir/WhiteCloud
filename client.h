@@ -15,6 +15,7 @@ public:
 
         QString message;
         QVector<QVector<QString> > files;
+        QByteArray file;
 
     friend QDataStream &operator << (QDataStream &stream, Data &object)
     {
@@ -23,6 +24,7 @@ public:
         stream << object.password;
         stream << object.message;
         stream << object.files;
+        stream << object.file;
 
         return stream;
     }
@@ -34,6 +36,7 @@ public:
         stream >> object.password;
         stream >> object.message;
         stream >> object.files;
+        stream >> object.file;
 
         return stream;
     }
@@ -53,7 +56,8 @@ private:
         Data message_from_server;
 
 public:
-        Data *createData(QString type, QString login, QString password, QString message, QVector<QVector<QString> > files);
+        Data *createData(QString type, QString login, QString password, QString message, QVector<QVector<QString> > files,
+                         QByteArray file);
         Data getData() const;
 
 public slots:
