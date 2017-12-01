@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QWidget>
 #include <QTcpSocket>
+#include <QVector>
 
 class Data
 {
@@ -13,6 +14,7 @@ public:
         QString type;
 
         QString message;
+        QVector<QVector<QString> > files;
 
     friend QDataStream &operator << (QDataStream &stream, Data &object)
     {
@@ -20,6 +22,7 @@ public:
         stream << object.login;
         stream << object.password;
         stream << object.message;
+        stream << object.files;
 
         return stream;
     }
@@ -30,6 +33,7 @@ public:
         stream >> object.login;
         stream >> object.password;
         stream >> object.message;
+        stream >> object.files;
 
         return stream;
     }
@@ -49,7 +53,7 @@ private:
         Data message_from_server;
 
 public:
-        Data *createData(QString type, QString login, QString password, QString message);
+        Data *createData(QString type, QString login, QString password, QString message, QVector<QVector<QString> > files);
         Data getData() const;
 
 public slots:

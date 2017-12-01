@@ -14,9 +14,11 @@
 
 #include "logo.h"
 #include "client.h"
+#include "account.h"
 
 class Logo;
 class Client;
+class Account;
 
 class Window : public QDialog
 {
@@ -36,6 +38,8 @@ private:
 private:
         Client *client;
         Logo *logo;
+        Account *account;
+
         QLabel *informer;
         QLineEdit *login, *pass;
         QGroupBox *sign_box;

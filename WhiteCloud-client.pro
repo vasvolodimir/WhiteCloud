@@ -26,10 +26,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp\
         window.cpp \
     logo.cpp \
-    client.cpp
+    client.cpp \
+    account.cpp
 
 HEADERS  += window.h \
     logo.h \
-    client.h
+    client.h \
+    account.h
 
 QT += network

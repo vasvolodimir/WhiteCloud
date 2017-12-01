@@ -10,7 +10,9 @@ Window::Window(QWidget *parent): QDialog(parent)
 
 Window::~Window()
 {
-
+    delete client;
+    delete logo;
+    delete account;
 }
 
 void Window::Layout()
@@ -125,12 +127,13 @@ void Window::logoClicked()
 void Window::buttonClicked()
 {
     QPushButton *btn = qobject_cast<QPushButton*> (sender());
+    QVector<QVector<QString> > temp;
 
     if(btn->text() == "Sign in")
     {
         if(!login->text().isEmpty() && !pass->text().isEmpty())
         {
-            Data *data = client->createData("sign in", validLogin(login->text()), pass->text(), "");
+            Data *data = client->createData("sign in", validLogin(login->text()), pass->text(), "", temp);
             client->slotSendToServer(*data);
         }
         else informer->setText("<font color=DarkRed><b>Input all fields!</b></font>");
@@ -140,7 +143,7 @@ void Window::buttonClicked()
     {
         if(!login->text().isEmpty() && !pass->text().isEmpty())
         {
-            Data *data = client->createData("sign up", validLogin(login->text()), pass->text(), "");
+            Data *data = client->createData("sign up", validLogin(login->text()), pass->text(), "", temp);
             client->slotSendToServer(*data);
         }
         else informer->setText("<font color=DarkRed><b>Input all fields!</b></font>");
@@ -156,6 +159,14 @@ void Window::ParseData()
 
         if(client->getData().message == "Inccorect password!")
             informer->setText("<font color=DarkRed><b>Inccorect password!</b></font>");
+
+        if(client->getData().message == "log in")
+        {
+            account = new Account(client->getData().login, client);
+
+            account->show();
+            this->hide();
+        }
     }
 
     if(client->getData().type == "sign up")
