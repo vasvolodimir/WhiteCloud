@@ -12,6 +12,7 @@
 #include <QGraphicsOpacityEffect>
 #include <QFile>
 #include <QMessageBox>
+#include <QFileDialog>
 
 #include "client.h"
 #include "create.h"

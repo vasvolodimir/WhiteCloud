@@ -197,6 +197,7 @@ void Account::choosenItem()
     view->setVisible(true);
     download->setVisible(true);
     del->setVisible(true);
+
 }
 
 void Account::buttonClick()
@@ -205,10 +206,62 @@ void Account::buttonClick()
 //    Layout();
 
     QPushButton *btn = qobject_cast<QPushButton*> (sender());
+    QByteArray temp; // as a temp
 
     if(btn->text() == "CREATE")
     {
         creater->show();
+    }
+
+    if(btn->text() == "VIEW")
+    {
+        QAction *action;
+
+        for(int i=0; i<actions.size(); i++)
+            if(actions[i]->isChecked())
+            {
+                action = actions[i];
+                break;
+            }
+
+
+        Data *data = client->createData("view", client->getData().login, client->getData().password,
+                                        action->toolTip(), client->getData().files, temp);
+        client->slotSendToServer(*data);
+    }
+
+    if(btn->text() == "DOWNLOAD")
+    {
+        QAction *action;
+
+        for(int i=0; i<actions.size(); i++)
+            if(actions[i]->isChecked())
+            {
+                action = actions[i];
+                break;
+            }
+
+
+        Data *data = client->createData("download", client->getData().login, client->getData().password,
+                                        action->toolTip(), client->getData().files, temp);
+        client->slotSendToServer(*data);
+    }
+
+    if(btn->text() == "DELETE")
+    {
+        QAction *action;
+
+        for(int i=0; i<actions.size(); i++)
+            if(actions[i]->isChecked())
+            {
+                action = actions[i];
+                break;
+            }
+
+
+        Data *data = client->createData("delete", client->getData().login, client->getData().password,
+                                        action->toolTip(), client->getData().files, temp);
+        client->slotSendToServer(*data);
     }
 }
 
@@ -232,6 +285,27 @@ void Account::ParseData()
             remove(layout);
             Layout();
         }
+    }
+
+    if(client->getData().type == "download")
+    {
+        QString path = QFileDialog::getSaveFileName(this, "Save...", "");
+
+        if(!path.isEmpty())
+        {
+            QFile file(path);
+            file.open(QIODevice::WriteOnly);
+
+            file.write(client->getData().file);
+            file.close();
+        }
+    }
+
+    if(client->getData().type == "delete")
+    {
+        getFile();
+        remove(layout);
+        Layout();
     }
 }
 
