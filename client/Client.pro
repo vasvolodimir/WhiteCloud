@@ -35,6 +35,8 @@ HEADERS  += include/window.h \
     include/logo.h \
     include/client.h \
     include/account.h \
-    include/create.h
+    include/create.h \
+    ../common/log.h \
+    ../common/dataflow.h \
 
 QT += network

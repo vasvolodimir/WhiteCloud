@@ -1,6 +1,7 @@
 #include "create.h"
 
-Create::Create(QWidget *parent): QDialog(parent)
+Create::Create(QWidget *parent)
+    : QDialog(parent)
 {
     Layout();
 }

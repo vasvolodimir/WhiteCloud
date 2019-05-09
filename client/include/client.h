@@ -7,7 +7,14 @@
 #include <QVector>
 #include <QDataStream>
 
-class Data
+enum data_type_t
+{
+    SIGNIN,
+    SIGNUP,
+    Unknown = -1
+};
+
+struct data_t
 {
 public:
         QString login;
@@ -18,7 +25,7 @@ public:
         QVector<QVector<QString> > files;
         QByteArray file;
 
-    friend QDataStream &operator << (QDataStream &stream, Data &object)
+    friend QDataStream &operator << (QDataStream &stream, data_t &object)
     {
         stream << object.type;
         stream << object.login;
@@ -30,7 +37,7 @@ public:
         return stream;
     }
 
-    friend QDataStream &operator >> (QDataStream &stream, Data &object)
+    friend QDataStream &operator >> (QDataStream &stream, data_t &object)
     {
         stream >> object.type;
         stream >> object.login;
@@ -48,28 +55,26 @@ class Client : public QWidget
     Q_OBJECT
 
 public:
-    Client(QWidget *parent = 0);
-    ~Client();
+        Client(QWidget *parent = 0);
+        ~Client();
 
-private:
-        QTcpSocket *socket;
-        quint16 nextBlockSize;
-        Data message_from_server;
-
-public:
-        Data *createData(QString type, QString login, QString password, QString message, QVector<QVector<QString> > files,
-                         QByteArray file);
-        Data getData() const;
+        data_t *createData(QString type, QString login, QString password,
+          QString message, QVector<QVector<QString> > files, QByteArray file);
+        data_t getData() const;
 
 public slots:
             void slotReadyRead();
             void slotError(QAbstractSocket::SocketError);
-            void slotSendToServer(Data &data);
+            void slotSendToServer(data_t &data);
             void Connected();
 
 signals:
             void readyData();
 
+private:
+        QTcpSocket *m_socket;
+        quint16 nextBlockSize;
+        data_t message_from_server;
 };
 
 

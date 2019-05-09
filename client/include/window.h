@@ -12,6 +12,7 @@
 #include <QPropertyAnimation>
 #include <QGraphicsOpacityEffect>
 
+#include "../common/log.h"
 #include "logo.h"
 #include "client.h"
 #include "account.h"
@@ -28,27 +29,35 @@ public:
     Window(QWidget *parent = 0);
     ~Window();
 
-private:
-        void Layout();
-        QLineEdit *edit(QString title);
-        QPushButton *button(QString title);
-        QPropertyAnimation *setAnimation(QWidget *item, int duration);
-        QString validLogin(QString text);
+    void notify(QString msg);
 
 private:
-        Client *client;
-        Logo *logo;
-        Account *account;
-
-        QLabel *informer;
-        QLineEdit *login, *pass;
-        QGroupBox *sign_box;
-        QPropertyAnimation *logo_anim, *sign_anim;
+        void layout();
+        QPropertyAnimation *createAnimation(QWidget *item, int duration,
+	  QPropertyAnimation **animation);
+        QString serializeLogin(QString text) const;
+        Logo *createLogo(Logo **logo, const char *slot);
+        QLabel *createInformer(QLabel **informer);
+        QLineEdit *createLineEdit(QString title, QLineEdit::EchoMode mode,
+	  QLineEdit **edit);
+        QPushButton *createPushButton(QString title, QPushButton **btn);
+        QGroupBox *createGroupBox(QLayout *layout, QGroupBox **group);
+        bool isCredentialsValid();
 
 private slots:
             void logoClicked();
-            void buttonClicked();
-            void ParseData();
+            void handleBtnClick();
+            void parseData();
+
+private:
+        Client *m_client;
+        Logo *m_logo;
+        Account *m_account;
+        QLabel *m_informer;
+        QLineEdit *m_login, *m_password;
+        QGroupBox *m_sign_box;
+        QPropertyAnimation *m_logo_anim, *m_sign_anim;
+
 };
 
 #endif // WINDOW_H

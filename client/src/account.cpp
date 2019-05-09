@@ -176,7 +176,7 @@ void Account::getFile()
 {
     QVector<QVector<QString> > temp;
     QByteArray btemp;
-    Data *data = client->createData("getFiles", client->getData().login, client->getData().password, "", temp, btemp);
+    data_t *data = client->createData("getFiles", client->getData().login, client->getData().password, "", temp, btemp);
     client->slotSendToServer(*data);
 }
 
@@ -225,7 +225,7 @@ void Account::buttonClick()
             }
 
 
-        Data *data = client->createData("view", client->getData().login, client->getData().password,
+        data_t *data = client->createData("view", client->getData().login, client->getData().password,
                                         action->toolTip(), client->getData().files, temp);
         client->slotSendToServer(*data);
     }
@@ -242,7 +242,7 @@ void Account::buttonClick()
             }
 
 
-        Data *data = client->createData("download", client->getData().login, client->getData().password,
+        data_t *data = client->createData("download", client->getData().login, client->getData().password,
                                         action->toolTip(), client->getData().files, temp);
         client->slotSendToServer(*data);
     }
@@ -259,7 +259,7 @@ void Account::buttonClick()
             }
 
 
-        Data *data = client->createData("delete", client->getData().login, client->getData().password,
+        data_t *data = client->createData("delete", client->getData().login, client->getData().password,
                                         action->toolTip(), client->getData().files, temp);
         client->slotSendToServer(*data);
     }
@@ -319,7 +319,7 @@ void Account::sendNewFile(QString path)
     QByteArray block = file.readAll();
     file.close();
 
-    Data *data = client->createData("newFile", client->getData().login, client->getData().password,
+    data_t *data = client->createData("newFile", client->getData().login, client->getData().password,
                                     getName(path), temp, block);
 
     client->slotSendToServer(*data);

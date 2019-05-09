@@ -1,65 +1,77 @@
 #include "window.h"
 
-Window::Window(QWidget *parent): QDialog(parent)
+Window::Window(QWidget *parent)
+    : QDialog(parent),
+      m_client(nullptr),
+      m_logo(nullptr),
+      m_account(nullptr),
+      m_informer(nullptr),
+      m_login(nullptr),
+      m_password(nullptr),
+      m_sign_box(nullptr),
+      m_logo_anim(nullptr),
+      m_sign_anim(nullptr)
 {
-    Layout();
+    layout();
 
-    client = new Client;
-    connect(client, SIGNAL(readyData()), this, SLOT(ParseData()));
+    if (m_logo_anim)
+        m_logo_anim->start();
+
+    m_client = new Client(this);
+    connect(m_client, SIGNAL(readyData()), this, SLOT(parseData()));
 }
 
 Window::~Window()
 {
-    delete client;
-    delete logo;
-    delete account;
+    delete m_client;
+    delete m_logo;
+    delete m_account;
 }
 
-void Window::Layout()
+void Window::notify(QString msg)
 {
-    logo = new Logo; // creating logo
-    logo->setCursor(Qt::PointingHandCursor);
-    connect(logo, SIGNAL(clicked()), this, SLOT(logoClicked()));
+    m_informer->setText("<font color=DarkRed><b>" + msg + "</b></font>");
+}
 
-    informer = new QLabel();
-
-    login = edit("e-mail");
-    pass = edit("password");
-    pass->setEchoMode(QLineEdit::Password);
-
-    QPushButton *sign_in = button("Sign in");
-    QPushButton *sign_out = button("Sign up");
-
-    connect(sign_in, SIGNAL(clicked(bool)), this, SLOT(buttonClicked()));
-    connect(sign_out, SIGNAL(clicked(bool)), this, SLOT(buttonClicked()));
-
-    QHBoxLayout *sign_buttons_layout = new QHBoxLayout;
-    sign_buttons_layout->addWidget(sign_in);
-    sign_buttons_layout->addWidget(sign_out);
-
+void Window::layout()
+{
+    QPalette pal;
+    QVBoxLayout *layout = new QVBoxLayout;
     QVBoxLayout *sign_layout = new QVBoxLayout;
+    QHBoxLayout *sign_buttons_layout = new QHBoxLayout;
+
+    pal.setColor(this->backgroundRole(), QColor(84, 102, 201));
+    layout->setAlignment(Qt::AlignCenter);
     sign_layout->setAlignment(Qt::AlignCenter);
-    sign_layout->addWidget(informer);
-    sign_layout->addWidget(login);
-    sign_layout->addWidget(pass);
+
+    if (createLogo(&m_logo, SLOT(logoClicked())))
+        layout->addWidget(m_logo);
+
+    if (createInformer(&m_informer))
+        sign_layout->addWidget(m_informer);
+
+    if (createLineEdit("e-mail", QLineEdit::Normal, &m_login))
+        sign_layout->addWidget(m_login);
+
+    if (createLineEdit("password", QLineEdit::Password, &m_password))
+        sign_layout->addWidget(m_password);
+
+    if (QPushButton *btn = createPushButton("Sign in", &btn))
+        sign_buttons_layout->addWidget(btn);
+
+    if (QPushButton *btn = createPushButton("Sign up", &btn))
+        sign_buttons_layout->addWidget(btn);
+
     sign_layout->addLayout(sign_buttons_layout);
 
-    sign_box = new QGroupBox;
-    sign_box->setLayout(sign_layout);
-    sign_box->hide();
+    if (createGroupBox(sign_layout, &m_sign_box))
+    {
+        m_sign_box->hide();
+        layout->addWidget(m_sign_box);
+    }
 
-    QVBoxLayout *layout = new QVBoxLayout;
-    layout->setAlignment(Qt::AlignCenter);
-    layout->addWidget(logo);
-    layout->addWidget(sign_box);
-
-    logo_anim = setAnimation(logo, 1000);
-    logo_anim->start();
-
-    sign_anim = setAnimation(sign_box, 3000);
-
-    QPalette pal;
-    pal.setColor(this->backgroundRole(), QColor(84, 102, 201));
+    createAnimation(m_logo, 1000, &m_logo_anim);
+    createAnimation(m_sign_box, 3000, &m_sign_anim);
 
     this->setPalette(pal);
     this->setLayout(layout);
@@ -67,43 +79,74 @@ void Window::Layout()
     this->setWindowTitle("White cloud");
 }
 
-QLineEdit *Window::edit(QString title)
+QLineEdit *Window::createLineEdit(QString title, QLineEdit::EchoMode mode,
+  QLineEdit **edit)
 {
-    QLineEdit *temp = new QLineEdit(title);
-    temp->setFixedWidth(200);
-    temp->setFont(QFont("Ubuntu", 12, QFont::Cursive));
+    *edit = new QLineEdit(this);
 
-    return temp;
+    (*edit)->setFixedWidth(200);
+    (*edit)->setFont(QFont("Ubuntu", 12, QFont::Cursive));
+    (*edit)->setEchoMode(mode);
+    (*edit)->setPlaceholderText(title);
+
+    return *edit;
 }
 
-QPushButton *Window::button(QString title)
+QPushButton *Window::createPushButton(QString title, QPushButton **btn)
 {
-    QPushButton *temp = new QPushButton(title);
-    temp->setStyleSheet("QPushButton { background: rgb(163, 142, 230); color: black; }"
-                        "QPushButton:hover { background: rgb(84, 226, 150); color: white; }");
+    *btn = new QPushButton(this);
 
-    temp->setFont(QFont("Ubuntu", 10, QFont::Bold));
-    temp->setCursor(Qt::PointingHandCursor);
+    (*btn)->setStyleSheet("QPushButton { background: rgb(163, 142, 230); "
+        "color: black; } QPushButton:hover { background: rgb(84, 226, 150);"
+        "color: white; }");
 
-    return temp;
+    (*btn)->setFont(QFont("Ubuntu", 10, QFont::Bold));
+    (*btn)->setCursor(Qt::PointingHandCursor);
+    (*btn)->setText(title);
+
+    connect(*btn, SIGNAL(clicked(bool)), this, SLOT(handleBtnClick()));
+
+    return *btn;
 }
 
-QPropertyAnimation *Window::setAnimation(QWidget *item, int duration)
+QGroupBox *Window::createGroupBox(QLayout *layout, QGroupBox **group)
 {
-    QGraphicsOpacityEffect *opacity = new QGraphicsOpacityEffect;
+    *group = new QGroupBox(this);
+
+    if (layout)
+        (*group)->setLayout(layout);
+
+    return *group;
+}
+
+bool Window::isCredentialsValid()
+{
+    if (m_login->text().isEmpty() || m_password->text().isEmpty())
+    {
+        notify("Incorrect credentials!");
+        return false;
+    }
+
+    return true;
+}
+
+QPropertyAnimation *Window::createAnimation(QWidget *item, int duration,
+   QPropertyAnimation **animation)
+{
+    QGraphicsOpacityEffect *opacity = new QGraphicsOpacityEffect(this);
     item->setGraphicsEffect(opacity);
 
-    QPropertyAnimation *anim = new QPropertyAnimation(opacity, "opacity");
-    anim->setDuration(duration);
+    *animation = new QPropertyAnimation(opacity, "opacity");
+    (*animation)->setDuration(duration);
 
-    anim->setStartValue(0.01);
-    anim->setEndValue(1.0);
-    anim->setEasingCurve(QEasingCurve::InOutQuad);
+    (*animation)->setStartValue(0.01);
+    (*animation)->setEndValue(1.0);
+    (*animation)->setEasingCurve(QEasingCurve::InOutQuad);
 
-    return anim;
+    return *animation;
 }
 
-QString Window::validLogin(QString text)
+QString Window::serializeLogin(QString text) const
 {
 
     if(text.indexOf(".") != -1 && text.indexOf("@") != -1 )
@@ -112,70 +155,88 @@ QString Window::validLogin(QString text)
         text.remove(text.indexOf("@"), 1);
     }
 
-//    qDebug() << text;
-
     return text;
+}
+
+Logo *Window::createLogo(Logo **logo, const char *slot)
+{
+    *logo = new Logo(this);
+    (*logo)->setCursor(Qt::PointingHandCursor);
+    connect(*logo, SIGNAL(clicked()), this, slot);
+
+    return *logo;
+}
+
+QLabel *Window::createInformer(QLabel **informer)
+{
+    *informer = new QLabel(this);
+
+    return *informer;
 }
 
 void Window::logoClicked()
 {
-    logo->hide();
-    sign_box->show();
-    sign_anim->start();
+    if (!m_logo || !m_sign_box || !m_sign_anim)
+        LOG_EXIT("Invalid pointer!", );
+
+    m_logo->hide();
+    m_sign_box->show();
+    m_sign_anim->start();
 }
 
-void Window::buttonClicked()
+void Window::handleBtnClick()
 {
-    QPushButton *btn = qobject_cast<QPushButton*> (sender());
-    QVector<QVector<QString> > temp; // as a temp
+    data_t *data;
     QByteArray btemp;
+    QVector<QVector<QString> > temp; // as a temp
+    QPushButton *btn = qobject_cast<QPushButton*> (sender());
 
-    if(btn->text() == "Sign in")
+    if (!btn)
+        LOG_EXIT("Invalid pointer!", );
+
+    if (!isCredentialsValid())
+        LOG_EXIT("Credentials is invalid!", );
+
+    if (btn->text() == "Sign in")
     {
-        if(!login->text().isEmpty() && !pass->text().isEmpty())
-        {
-            Data *data = client->createData("sign in", validLogin(login->text()), pass->text(), "", temp, btemp);
-            client->slotSendToServer(*data);
-        }
-        else informer->setText("<font color=DarkRed><b>Input all fields!</b></font>");
+        data = m_client->createData("sign in", serializeLogin(m_login->text()),
+               m_password->text(), "", temp, btemp);
+        m_client->slotSendToServer(*data);
     }
 
-    if(btn->text() == "Sign up")
+    if (btn->text() == "Sign up")
     {
-        if(!login->text().isEmpty() && !pass->text().isEmpty())
-        {
-            Data *data = client->createData("sign up", validLogin(login->text()), pass->text(), "", temp, btemp);
-            client->slotSendToServer(*data);
-        }
-        else informer->setText("<font color=DarkRed><b>Input all fields!</b></font>");
+        data = m_client->createData("sign up", serializeLogin(m_login->text()),
+                                  m_password->text(), "", temp, btemp);
+        m_client->slotSendToServer(*data);
     }
 }
 
-void Window::ParseData()
+void Window::parseData()
 {
-    if(client->getData().type == "sign in")
+    if (m_client->getData().type == "sign in")
     {
-        if(client->getData().message == "User not exist!")
-            informer->setText("<font color=DarkRed><b>User not exist!</b></font>");
+        if (m_client->getData().message == "User not exist!")
+            m_informer->setText("<font color=DarkRed><b>User not exist!</b></font>");
 
-        if(client->getData().message == "Inccorect password!")
-            informer->setText("<font color=DarkRed><b>Inccorect password!</b></font>");
+        if (m_client->getData().message == "Inccorect password!")
+            m_informer->setText("<font color=DarkRed><b>Inccorect password!</b></font>");
 
-        if(client->getData().message == "log in")
+        if (m_client->getData().message == "log in")
         {
-            account = new Account(client->getData().login, client);
+            m_account = new Account(m_client->getData().login, m_client);
 
-            account->show();
+            m_account->show();
             this->hide();
         }
     }
 
-    if(client->getData().type == "sign up")
+    if (m_client->getData().type == "sign up")
     {
-        if(client->getData().message == "User already exist!")
-            informer->setText("<font color=DarkRed><b>User already exist!</b></font>");
+        if (m_client->getData().message == "User already exist!")
+            m_informer->setText("<font color=DarkRed><b>User already exist!</b></font>");
 
-        if(client->getData().message == "Registration was successful!")
-            informer->setText("<font color=DarkRed><b>Registration was successful!</b></font>");
+        if (m_client->getData().message == "Registration was successful!")
+            m_informer->setText("<font color=DarkRed><b>Registration was successful!</b></font>");
     }
 }
